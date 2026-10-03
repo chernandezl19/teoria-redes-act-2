@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reto Relámpago · Teoría de Redes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EFF3; --card:#FFFFFF; --ink:#14202B; --muted:#52636F; --line:#C9D5DD; --edge:#9FB0BC;
+  --teal:#0B8F7D; --magenta:#D12F6B; --amber:#E39B00; --blue:#2C69D6; --bad:#C62828;
+  --good-bg:#DDF3EE; --bad-bg:#FBE3E3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E171E; --card:#16232D; --ink:#E7EEF3; --muted:#9DB0BE; --line:#2C3E4B; --edge:#4A6070;
+    --teal:#2CC4AE; --magenta:#F0628F; --amber:#F5B83A; --blue:#6B9CFF; --bad:#FF7B7B;
+    --good-bg:#12372F; --bad-bg:#3E1D20;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E171E; --card:#16232D; --ink:#E7EEF3; --muted:#9DB0BE; --line:#2C3E4B; --edge:#4A6070;
+  --teal:#2CC4AE; --magenta:#F0628F; --amber:#F5B83A; --blue:#6B9CFF; --bad:#FF7B7B;
+  --good-bg:#12372F; --bad-bg:#3E1D20;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif}
+h1,h2{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1.12;margin:0}
+h1{font-size:clamp(34px,8vw,52px)}
+h2{font-size:clamp(21px,4.6vw,26px)}
+p{margin:0}
+.app{max-width:680px;margin:0 auto;padding:20px 16px 48px}
+.hud{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}
+.hud div{display:flex;flex-direction:column;line-height:1.2}
+.hud span{font-size:13px;color:var(--muted)}
+.hud b{font-family:'Bricolage Grotesque',sans-serif;font-size:24px}
+.lives{color:var(--magenta);letter-spacing:2px}
+.lost{opacity:.22}
+.metro{display:flex;align-items:center;margin:4px 0 20px}
+.st{flex:none;width:16px;height:16px;border-radius:50%;border:4px solid var(--ink);background:var(--card)}
+.st.ok{background:var(--teal);border-color:var(--teal)}
+.st.bad{background:var(--bad);border-color:var(--bad)}
+.st.now{width:26px;height:26px;border-color:var(--amber)}
+.seg{flex:1;height:6px;background:var(--line)}
+.seg.done{background:var(--ink)}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:20px}
+.count{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:8px}
+.gwrap{margin:14px auto 4px;max-width:420px}
+.gwrap svg{display:block;width:100%;height:auto}
+.timer{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:16px 0 6px}
+.timer i{display:block;height:100%;width:100%;background:var(--teal)}
+.timer i.low{background:var(--bad)}
+.opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--card);color:var(--ink);border:2px solid var(--ink);border-radius:10px;padding:12px 14px;margin-top:10px;font:inherit;cursor:pointer}
+.opt .k{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center;font-weight:600;font-size:14px}
+.opt:hover:not(:disabled){background:var(--bg)}
+.opt:focus-visible,.btn:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--teal);background:var(--good-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.fb{margin-top:16px;padding:14px 16px;border-radius:10px;border-left:6px solid var(--ink);background:var(--bg)}
+.fb.good{border-left-color:var(--teal)}
+.fb.bad{border-left-color:var(--bad)}
+.fb strong{display:block;margin-bottom:2px}
+.btn{font:600 16px 'Figtree',sans-serif;background:var(--ink);color:var(--card);border:2px solid var(--ink);border-radius:10px;padding:12px 20px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:hover{opacity:.88}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.rules{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.rules li{display:flex;gap:10px;align-items:flex-start}
+.rules i{flex:none;width:12px;height:12px;border-radius:50%;margin-top:7px;background:var(--teal)}
+.rules li:nth-child(2) i{background:var(--magenta)}
+.rules li:nth-child(3) i{background:var(--amber)}
+label{display:block;margin-top:20px;font-weight:600}
+input{display:block;width:100%;margin-top:6px;font:inherit;padding:12px 14px;border-radius:10px;border:2px solid var(--ink);background:var(--card);color:var(--ink)}
+.lead{margin-top:12px;color:var(--muted)}
+.big{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(44px,12vw,72px);line-height:1;margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.stats div{border:2px solid var(--line);border-radius:10px;padding:10px}
+.stats b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:26px}
+.stats span{font-size:13px;color:var(--muted)}
+textarea{width:100%;margin-top:12px;font:inherit;padding:10px;border-radius:10px;border:2px solid var(--ink);background:var(--card);color:var(--ink)}
+.best{margin-top:14px;font-size:15px;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){
+  .st.now{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{50%{transform:scale(1.18)}}
+  .timer i{transition:width .1s linear}
+}
+</style>
+</head>
+<body>
+<main class="app" id="app"></main>
+
+<script>
+const ROUNDS=10, TIME=20, LIVES=3;
+
+/* ---------- Grafo de ejemplo (el de la clase) ---------- */
+const POS={1:[60,200],2:[190,90],3:[190,310],4:[350,200],5:[510,90],6:[510,310],7:[640,200]};
+const U=[[1,2],[1,4],[1,3],[2,5],[2,4],[3,4],[3,6],[4,7],[4,6],[5,7],[6,7]];
+const D=[[1,2],[1,4],[1,3],[2,5],[4,2],[4,7],[3,4],[3,6],[6,4],[6,7],[5,7]];
+const key=(a,b)=>a<b?a+'-'+b:b+'-'+a;
+
+function drawGraph({dir=false,hl=[]}){
+  const R=26, edges=dir?D:U;
+  const hk=new Set(hl.map(e=>dir?e[0]+'>'+e[1]:key(e[0],e[1])));
+  const hn=new Set(); hl.forEach(e=>{hn.add(e[0]);hn.add(e[1]);});
+  let s='<svg viewBox="0 0 700 400" role="img" aria-label="Gráfica de siete nodos">';
+  edges.forEach(([a,b])=>{
+    const on=hk.has(dir?a+'>'+b:key(a,b));
+    const col=on?'var(--magenta)':'var(--edge)', w=on?10:6;
+    const [x1,y1]=POS[a],[x2,y2]=POS[b];
+    if(!dir){
+      s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+    }else{
+      const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,nx=-uy,ny=ux;
+      const tx=x2-ux*(R+3),ty=y2-uy*(R+3),bx=tx-ux*18,by=ty-uy*18;
+      s+=`<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+      s+=`<polygon points="${tx},${ty} ${bx+nx*9},${by+ny*9} ${bx-nx*9},${by-ny*9}" fill="${col}"/>`;
+    }
+  });
+  Object.keys(POS).forEach(n=>{
+    const [x,y]=POS[n], on=hn.has(+n);
+    s+=`<circle cx="${x}" cy="${y}" r="${R}" fill="${on?'var(--magenta)':'var(--card)'}" stroke="${on?'var(--magenta)':'var(--ink)'}" stroke-width="5"/>`;
+    s+=`<text x="${x}" y="${y+8}" text-anchor="middle" font-family="Bricolage Grotesque,Figtree,sans-serif" font-weight="800" font-size="24" fill="${on?'#fff':'var(--ink)'}">${n}</text>`;
+  });
+  return s+'</svg>';
+}
+
+/* ---------- Banco de preguntas (la opción correcta es a: índice) ---------- */
+const Q=[
+ {q:"¿Qué es una gráfica en teoría de redes?",
+  o:["Una serie de nodos unidos por ramales o arcos","Un diagrama de barras con datos","Un conjunto de arcos sin nodos","Una red con flujo eléctrico"],a:0,
+  e:"Una gráfica es una serie de puntos (nodos) unidos por líneas llamadas ramales o arcos."},
+ {q:"¿Qué distingue a una red de una simple gráfica?",
+  o:["Presenta algún tipo de flujo en sus ramales","Tiene más de siete nodos","Todos sus arcos están orientados","No contiene ciclos"],a:0,
+  e:"Una red es una gráfica con flujo en sus ramales. Si el flujo es electricidad, es una red eléctrica."},
+ {q:"En la notación (N, A) de una red, ¿qué representa la A?",
+  o:["El número de arcos o ramales","El número de nodos","El número de rutas posibles","La longitud total de la red"],a:0,
+  e:"N es el número de nodos que contiene la red y A es el número de arcos o ramales."},
+ {q:"La cadena resaltada va del nodo 1 al nodo 7. ¿Cuál es su ruta?",
+  o:["[1, 4, 7]","[1-4, 4-7]","[1, 2, 5, 7]","[1, 3, 6, 7]"],a:0,g:{hl:[[1,4],[4,7]]},
+  e:"La cadena son los arcos [1-4, 4-7]. La ruta son los nodos que forman esa cadena: [1, 4, 7]."},
+ {q:"Una ruta corresponde a…",
+  o:["Los nodos que constituyen una cadena","Los arcos que unen dos nodos","Un nodo unido consigo mismo","Una gráfica sin ciclos"],a:0,
+  e:"La cadena se describe con arcos; la ruta se describe con los nodos de esa cadena."},
+ {q:"¿Qué forman los arcos resaltados 4-2, 2-5, 5-7 y 7-4?",
+  o:["Un ciclo","Un árbol","Un árbol de expansión","Un nodo fuente"],a:0,g:{hl:[[4,2],[2,5],[5,7],[7,4]]},
+  e:"Empiezan y terminan en el nodo 4: es una cadena que une un nodo consigo mismo, o sea un ciclo."},
+ {q:"Un ciclo es…",
+  o:["Una cadena que une a un nodo consigo mismo","Un arco con un solo sentido","Un árbol que enlaza todos los nodos","Un nodo sin arcos"],a:0,
+  e:"Un ciclo es la cadena que sale de un nodo y regresa a él."},
+ {q:"¿Qué es un arco orientado?",
+  o:["Uno con sentido: tiene un nodo fuente y un nodo destino","Uno que forma parte de un ciclo","Uno que une un nodo consigo mismo","Uno que no transporta flujo"],a:0,
+  e:"Un arco orientado tiene un sentido determinado: sale de un nodo fuente y llega a un nodo destino."},
+ {q:"Una gráfica orientada es aquella en la que…",
+  o:["Todos sus ramales están orientados","Solo algunos arcos tienen flecha","No existe ningún nodo fuente","Todos los nodos pertenecen a un ciclo"],a:0,
+  e:"En una gráfica orientada todos los ramales tienen sentido."},
+ {q:"¿Qué es un árbol?",
+  o:["Una gráfica en la que no existen ciclos","Una gráfica con exactamente un ciclo","Una gráfica con todos los arcos orientados","Una red con flujo eléctrico"],a:0,
+  e:"Un árbol es una gráfica sin ciclos."},
+ {q:"¿Qué es un árbol de expansión?",
+  o:["Un árbol que enlaza todos los nodos de la red","Un árbol que solo une dos nodos","Una gráfica con ciclos que cubre toda la red","El árbol con más arcos orientados"],a:0,
+  e:"Un árbol de expansión enlaza todos los nodos de la red y, como todo árbol, no permite ciclos."},
+ {q:"En esta gráfica orientada, ¿cuál es el nodo fuente?",
+  o:["Nodo 1","Nodo 4","Nodo 7","Nodo 3"],a:0,g:{dir:true},
+  e:"El nodo fuente tiene todos sus ramales orientados hacia afuera. Del nodo 1 salen tres arcos y no llega ninguno."},
+ {q:"En esta gráfica orientada, ¿cuál es el nodo destino?",
+  o:["Nodo 7","Nodo 5","Nodo 6","Nodo 1"],a:0,g:{dir:true},
+  e:"El nodo destino tiene todos sus ramales orientados hacia él. Al nodo 7 llegan tres arcos y no sale ninguno."},
+ {q:"Una gráfica cuyo flujo en los ramales es la electricidad es una red eléctrica.",
+  o:["Verdadero","Falso"],a:0,fixed:true,
+  e:"Correcto: una red es una gráfica con flujo en sus ramales, y ese flujo puede ser electricidad."},
+ {q:"Un árbol puede contener ciclos siempre que enlace todos los nodos.",
+  o:["Verdadero","Falso"],a:1,fixed:true,
+  e:"Falso: por definición un árbol no tiene ciclos, tampoco el árbol de expansión."},
+ {q:"Un nodo destino puede tener ramales orientados hacia afuera.",
+  o:["Verdadero","Falso"],a:1,fixed:true,
+  e:"Falso: en el nodo destino todos los ramales están orientados hacia él."},
+ {q:"La gestión de proyectos con PERT/CPM para hallar la ruta crítica es una aplicación de la teoría de redes en…",
+  o:["Finanzas y gestión de proyectos","Telecomunicaciones e informática","Logística y transporte","Ninguna: PERT/CPM no usa redes"],a:0,
+  e:"PERT/CPM modela las actividades de un proyecto como una red para identificar la ruta crítica."},
+ {q:"El enrutamiento de paquetes de datos en internet es una aplicación de la teoría de redes en…",
+  o:["Telecomunicaciones e informática","Logística y transporte","Finanzas y gestión de proyectos","Producción agrícola"],a:0,
+  e:"Enrutar paquetes, diseñar redes de comunicación y analizar redes sociales son usos en telecomunicaciones e informática."},
+ {q:"Una app como Waze calcula la ruta más corta para un vehículo de reparto. ¿En qué área encaja?",
+  o:["Logística y transporte","Telecomunicaciones e informática","Finanzas y gestión de proyectos","Análisis de redes sociales"],a:0,
+  e:"La ruta más corta para un vehículo de reparto y el diseño de redes de distribución son logística y transporte."},
+ {q:"Un árbol de expansión de una red con 7 nodos tiene…",
+  o:["6 arcos","7 arcos","5 arcos","Depende de cuántos ciclos haya"],a:0,
+  e:"Para enlazar N nodos sin formar ciclos se necesitan N − 1 arcos. Con 7 nodos, son 6."}
+];
+
+/* ---------- Estado y utilidades ---------- */
+const app=document.getElementById('app');
+let S=null, timer=null, screen='start', typedName='';
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function bestGet(){try{return +localStorage.getItem('rr-best')||0;}catch(e){return 0;}}
+function bestSet(v){try{localStorage.setItem('rr-best',String(v));}catch(e){}}
+
+function newGame(name){
+  const deck=shuffle(Q).slice(0,ROUNDS).map(q=>{
+    const idx=q.fixed?q.o.map((_,i)=>i):shuffle(q.o.map((_,i)=>i));
+    return {...q,opts:idx.map(i=>q.o[i]),ans:idx.indexOf(q.a)};
+  });
+  S={name,deck,i:0,score:0,lives:LIVES,streak:0,best:0,ok:0,res:[],t:TIME,locked:false};
+}
+
+function hud(){
+  return `<div class="hud"><div><span>Puntos</span><b>${S.score}</b></div>
+  <div><span>Vidas</span><b class="lives" aria-label="${S.lives} vidas">${'♥'.repeat(S.lives)}<span class="lost">${'♥'.repeat(LIVES-S.lives)}</span></b></div>
+  <div><span>Racha</span><b>${S.streak}</b></div></div>`;
+}
+function metro(){
+  let h='<div class="metro" aria-hidden="true">';
+  for(let i=0;i<S.deck.length;i++){
+    const c=S.res[i]||(i===S.i&&screen==='q'?'now':'');
+    h+=`<div class="st ${c}"></div>`;
+    if(i<S.deck.length-1)h+=`<div class="seg ${S.res[i]?'done':''}"></div>`;
+  }
+  return h+'</div>';
+}
+
+/* ---------- Pantallas ---------- */
+function renderStart(){
+  screen='start';
+  const b=bestGet();
+  app.innerHTML=`<section class="card">
+    <h1>Reto Relámpago</h1>
+    <p class="lead">Diez preguntas sobre teoría de redes. Cada parada correcta suma puntos y cada error te cuesta una vida.</p>
+    <ul class="rules">
+      <li><i></i><span>Tienes ${TIME} segundos por pregunta. Responder rápido da más puntos.</span></li>
+      <li><i></i><span>Tienes ${LIVES} vidas. Si se acaban, el recorrido termina.</span></li>
+      <li><i></i><span>Las respuestas correctas seguidas suman puntos extra de racha.</span></li>
+    </ul>
+    <label for="nm">Tu nombre</label>
+    <input id="nm" autocomplete="name" placeholder="Nombre y apellido" value="${typedName.replace(/"/g,'&quot;')}">
+    <div class="row"><button class="btn" data-act="start">Iniciar recorrido</button></div>
+    ${b?`<p class="best">Tu mejor puntaje en este dispositivo: ${b}</p>`:''}
+  </section>`;
+}
+
+function renderQ(){
+  screen='q';
+  const q=S.deck[S.i]; S.locked=false; S.t=TIME;
+  app.innerHTML=`${hud()}${metro()}
+  <section class="card">
+    <p class="count"><span>Parada ${S.i+1} de ${S.deck.length}</span><span><b id="tnum">${TIME}</b> s</span></p>
+    <h2>${q.q}</h2>
+    ${q.g?`<div class="gwrap">${drawGraph(q.g)}</div>`:''}
+    <div class="timer" role="timer" aria-label="Tiempo restante"><i id="tbar"></i></div>
+    <div id="opts">${q.opts.map((t,i)=>`<button class="opt" data-i="${i}"><span class="k">${'ABCD'[i]}</span><span>${t}</span></button>`).join('')}</div>
+    <div id="fb" aria-live="polite"></div>
+  </section>`;
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    S.t=Math.max(0,S.t-0.1);
+    const bar=document.getElementById('tbar'),num=document.getElementById('tnum');
+    if(bar){bar.style.width=(S.t/TIME*100)+'%';bar.classList.toggle('low',S.t<=6);}
+    if(num)num.textContent=Math.ceil(S.t);
+    if(S.t<=0)answer(-1);
+  },100);
+}
+
+function answer(i){
+  if(S.locked)return; S.locked=true; clearInterval(timer);
+  const q=S.deck[S.i], good=i===q.ans;
+  let pts=0;
+  if(good){
+    S.streak++; S.best=Math.max(S.best,S.streak); S.ok++;
+    pts=100+Math.round(S.t/TIME*50)+Math.min(S.streak-1,5)*10;
+    S.score+=pts; S.res[S.i]='ok';
+  }else{
+    S.streak=0; S.lives--; S.res[S.i]='bad';
+  }
+  document.querySelectorAll('.opt').forEach((b,k)=>{
+    b.disabled=true;
+    if(k===q.ans)b.classList.add('right');
+    else if(k===i)b.classList.add('wrong');
+  });
+  const over=S.lives<=0||S.i>=S.deck.length-1;
+  const title=good?`Correcto, +${pts} puntos`:(i===-1?'Se acabó el tiempo':'Respuesta incorrecta');
+  document.getElementById('fb').innerHTML=`<div class="fb ${good?'good':'bad'}"><strong>${title}</strong>${q.e}</div>
+    <div class="row"><button class="btn" id="next" data-act="next">${over?'Ver resultado':'Siguiente parada'}</button></div>`;
+  const n=document.getElementById('next'); if(n)n.focus();
+  // actualizar HUD y metro sin perder el feedback
+  const h=document.querySelector('.hud'); if(h)h.outerHTML=hud();
+  const m=document.querySelector('.metro'); if(m)m.outerHTML=metro();
+}
+
+function next(){
+  if(S.lives<=0||S.i>=S.deck.length-1){renderEnd();return;}
+  S.i++; renderQ();
+}
+
+function rankOf(){
+  if(S.ok>=9)return 'Operador/a de la red';
+  if(S.ok>=7)return 'Jefe/a de ruta';
+  if(S.ok>=5)return 'Conductor/a';
+  return 'Pasajero/a en práctica';
+}
+function resultText(){
+  return `${S.name||'Estudiante'} — Reto Relámpago de Teoría de Redes: ${S.score} puntos, ${S.ok}/${S.deck.length} correctas, mejor racha ${S.best}. Rango: ${rankOf()}.`;
+}
+
+function renderEnd(){
+  screen='end'; clearInterval(timer);
+  const prev=bestGet(), record=S.score>prev; if(record)bestSet(S.score);
+  const broke=S.lives<=0;
+  app.innerHTML=`${metro()}
+  <section class="card">
+    <p class="lead" style="margin:0">${broke?'Te quedaste sin vidas':'Llegaste a la última parada'}</p>
+    <h1 style="margin-top:6px">${rankOf()}</h1>
+    <div class="big">${S.score}</div>
+    <p class="lead">${record&&S.score>0?'Es tu mejor puntaje en este dispositivo.':'Tu mejor puntaje en este dispositivo: '+Math.max(prev,S.score)+'.'}</p>
+    <div class="stats">
+      <div><b>${S.ok}/${S.deck.length}</b><span>Correctas</span></div>
+      <div><b>${S.best}</b><span>Mejor racha</span></div>
+      <div><b>${S.lives}</b><span>Vidas restantes</span></div>
+    </div>
+    <div class="row">
+      <button class="btn" data-act="again">Jugar de nuevo</button>
+      <button class="btn ghost" data-act="copy">Copiar mi resultado</button>
+    </div>
+    <div id="copied"></div>
+  </section>`;
+}
+
+async function copyResult(){
+  const t=resultText(), box=document.getElementById('copied');
+  try{
+    await navigator.clipboard.writeText(t);
+    box.innerHTML='<p class="best">Resultado copiado. Pégalo donde tu docente lo indique.</p>';
+  }catch(e){
+    box.innerHTML=`<p class="best">Copia este texto y envíalo a tu docente:</p><textarea readonly rows="3" id="ta">${t}</textarea>`;
+    const ta=document.getElementById('ta'); if(ta){ta.focus();ta.select();}
+  }
+}
+
+/* ---------- Eventos ---------- */
+app.addEventListener('click',e=>{
+  const opt=e.target.closest('.opt'); if(opt&&screen==='q'){answer(+opt.dataset.i);return;}
+  const a=e.target.closest('[data-act]'); if(!a)return;
+  const act=a.dataset.act;
+  if(act==='start'){const v=document.getElementById('nm').value.trim();typedName=v;newGame(v);renderQ();}
+  else if(act==='next')next();
+  else if(act==='again'){S=null;renderStart();}
+  else if(act==='copy')copyResult();
+});
+document.addEventListener('keydown',e=>{
+  if(screen==='start'&&e.key==='Enter'&&e.target.id==='nm'){document.querySelector('[data-act="start"]').click();return;}
+  if(screen==='q'&&S&&!S.locked){
+    const k='abcd1234'.indexOf(e.key.toLowerCase());
+    if(k>=0){const i=k%4;if(i<S.deck[S.i].opts.length)answer(i);}
+  }
+});
+
+renderStart();
+</script>
+</body>
+</html>
